@@ -22,15 +22,7 @@ public class BlockController {
     private Blockchain blockchain;
 
     @Value("${blockchain.node.id}")
-    private String blockChainNodeId;
-
-    @RequestMapping(value = "/transaction", method = RequestMethod.POST)
-    @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, String> createTransaction(@RequestBody Transaction transaction) {
-        long index = blockchain.createTransaction(transaction);
-
-        return Collections.singletonMap("message", String.format("Transaction will be added to Block {%d}", index));
-    }
+    private String blockchainNodeId;
 
     @RequestMapping("/mine")
     public Map<String, Object> mine() {
@@ -39,7 +31,7 @@ public class BlockController {
 
         long nonce = blockchain.proofOfWork(lastNonce);
 
-        blockchain.createTransaction(new Transaction("0", blockChainNodeId, BigDecimal.valueOf(1), "xxx", "yyy"));
+        blockchain.createTransaction(new Transaction("0", blockchainNodeId, BigDecimal.valueOf(1), "0", "0"));
 
         Map<String, Object> response = new HashMap<>();
         HashHelper hashHelper = new HashHelper();
@@ -55,6 +47,20 @@ public class BlockController {
             response.put("error", "Another block is created");
         }
 
+        return response;
+    }
+
+    @RequestMapping("/get-miner-job")
+    public Map<String, Object> getMinerJob() {
+        Block lastBlock = blockchain.getLastBlock();
+        long index = lastBlock.getIndex()+1;
+        String prevBlockHash = lastBlock.getPreviousHash();
+        int difficulty = 4;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("index", index);
+        response.put("prevBlockHash", prevBlockHash);
+        response.put("difficulty", difficulty);
         return response;
     }
 

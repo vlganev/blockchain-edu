@@ -1,6 +1,7 @@
 package blockchainedu.blockchainedu.helper;
 
 import blockchainedu.blockchainedu.models.Block;
+import blockchainedu.blockchainedu.models.Transaction;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;

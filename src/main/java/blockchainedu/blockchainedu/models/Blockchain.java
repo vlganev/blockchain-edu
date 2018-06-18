@@ -11,18 +11,14 @@ import java.io.Serializable;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class Blockchain implements Serializable {
-
     private HashHelper hashHelper;
-
     private List<Transaction> currentTransactions;
-
     private List<Block> chain;
-
     private Set<URL> nodes;
-
     private RestTemplate restTemplate;
 
     @Autowired
@@ -37,13 +33,13 @@ public class Blockchain implements Serializable {
     }
 
     public Block createBlock(Block block) {
-
         block.setIndex(chain.size() + 1);
         if (block.getNonce() == 100 && block.getPreviousHash() == "1") {
             block.setTimestamp(0);
         } else {
             block.setTimestamp(System.currentTimeMillis());
         }
+        this.currentTransactions.forEach(t -> t.didTransaction(chain.size() + 1));
         block.setTransactions(this.currentTransactions);
         if (block.getPreviousHash() == null) {
             block.setPreviousHash(hashHelper.hashBlock(block));
@@ -60,10 +56,10 @@ public class Blockchain implements Serializable {
         return this.chain.get(this.chain.size() - 1);
     }
 
-    public long createTransaction(Transaction transaction) {
+    public String createTransaction(Transaction transaction) {
         this.currentTransactions.add(transaction);
-
-        return this.chain.get(this.chain.size() - 1).getIndex() + 1;
+        String transactionHash = currentTransactions.get(currentTransactions.size() -1).generateTransactionHash();
+        return transactionHash;
     }
 
     public long proofOfWork(long lastNonce) {
@@ -143,6 +139,33 @@ public class Blockchain implements Serializable {
         }
 
         return false;
+    }
+
+    public Transaction getTransactionInfo(String hash) {
+        if (currentTransactions.stream().filter(t -> t.getTransactionHash().equals(hash)).findFirst().isPresent()) {
+            return currentTransactions.stream()
+                    .filter(t -> t.getTransactionHash().equals(hash))
+                    .collect(Collectors.toList()).get(0);
+        }
+
+        for (Block block : this.chain) {
+            for (Transaction transaction: block.getTransactions()) {
+                System.out.printf(transaction.getTransactionHash());
+
+                if (hash.equals(transaction.getTransactionHash())) {
+                    return transaction;
+                }
+            }
+        }
+        return new Transaction();
+    }
+
+    public List<Transaction> getPendingTransaction() {
+        return this.currentTransactions;
+    }
+
+    public long getChainSize() {
+        return this.chain.size();
     }
 
     public Set<URL> getNodes() {

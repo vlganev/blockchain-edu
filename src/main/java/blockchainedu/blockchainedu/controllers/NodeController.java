@@ -14,13 +14,14 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/nodes")
 public class NodeController {
 
     @Autowired
-    private Blockchain blockChain;
+    private Blockchain blockchain;
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ResponseEntity<Object> registerNodes(@RequestBody List<String> nodes) {
@@ -30,7 +31,7 @@ public class NodeController {
 
         for (String node : nodes) {
             try {
-                blockChain.registerNode(new URL(node));
+                blockchain.registerNode(new URL(node));
             } catch (MalformedURLException e) {
                 return new ResponseEntity<Object>("Error: Invalid node " + node + ", Please supply a valid node", HttpStatus.BAD_REQUEST);
             }
@@ -38,17 +39,29 @@ public class NodeController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "New nodes have been added");
-        response.put("total_nodes", blockChain.getNodes());
+        response.put("total_nodes", blockchain.getNodes());
+
+        return new ResponseEntity<Object>(response, HttpStatus.CREATED);
+    }
+
+    @RequestMapping(value = "/info", method = RequestMethod.GET)
+    public ResponseEntity<Object> infoNodes() {
+
+        Map<String, Object> response = new HashMap<>();
+        Set<URL> nodes = blockchain.getNodes();
+        for (URL node : nodes) {
+            response.put("node", node);
+        }
 
         return new ResponseEntity<Object>(response, HttpStatus.CREATED);
     }
 
     @RequestMapping("/resolve")
     public Map<String, Object> consensus() {
-        Boolean replaced = blockChain.resolveConflicts();
+        Boolean replaced = blockchain.resolveConflicts();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("new_chain", blockChain.getChain());
+        response.put("new_chain", blockchain.getChain());
 
         if (replaced) {
             response.put("message", "Our chain was replaced");
