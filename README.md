@@ -9,6 +9,15 @@ API:
 /transaction/pending -> check all pending transactions [GET]
 
 /transaction/{transactionHash} -> request info about transaction [POST]
+Example:
+
+{
+        "sender": "sender",
+        "recipient": "recipient",
+        "amount": 100,
+        "senderPublickKey": "senderPublickKey",
+        "senderSignature": "senderSignature"
+}
 
 /blocks -> get all blocks [GET]
 
@@ -17,3 +26,9 @@ API:
 /nodes/register –> register new node [“http://localhost:1234”] [POST]
 
 /nodes/info -> show all nodes [GET]
+
+/nodes/sync -> manual sync of the nodes [GET]
+
+/get-miner-job -> get miner job [GET]
+
+/get-block/{id} -> apply for the next block [POST]

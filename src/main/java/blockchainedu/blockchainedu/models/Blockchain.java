@@ -1,6 +1,7 @@
 package blockchainedu.blockchainedu.models;
 
 import blockchainedu.blockchainedu.dto.BlockchainResponseDto;
+import blockchainedu.blockchainedu.dto.TransactionsResponseDto;
 import blockchainedu.blockchainedu.helper.HashHelper;
 import com.google.common.io.BaseEncoding;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,12 +116,13 @@ public class Blockchain implements Serializable {
         return true;
     }
 
-    public boolean resolveConflicts() {
+    public boolean syncNode() {
         Set<URL> neighbours = this.nodes;
         List<Block> newChain = null;
 
         int maxLength = chain.size();
 
+        // sync blocks
         for (URL node:neighbours) {
             BlockchainResponseDto response = restTemplate.getForObject(node.toString() + "/blocks", BlockchainResponseDto.class);
 
@@ -138,7 +140,27 @@ public class Blockchain implements Serializable {
             return true;
         }
 
+        // sync pending transaction, one sender can do transactions only on 1 node
+        // if there are transactions of the the sender on the other chains
+        // his transactions will be dropped. On the next version will be fixed ;)
+        syncPendingTransactions();
+
         return false;
+    }
+
+    public void syncPendingTransactions() {
+        Set<URL> neighbours = this.nodes;
+
+        for (URL node:neighbours) {
+            TransactionsResponseDto response = restTemplate.getForObject(node.toString() + "/transaction/pending", TransactionsResponseDto.class);
+
+            int length = response.getLength();
+            List<Transaction> remoteTransactions = response.getTransactions();
+
+            for (Transaction remoteTransaction : remoteTransactions) {
+                currentTransactions.removeIf(t -> t.getSender().equals(remoteTransaction.getSender()));
+            }
+        }
     }
 
     public Transaction getTransactionInfo(String hash) {

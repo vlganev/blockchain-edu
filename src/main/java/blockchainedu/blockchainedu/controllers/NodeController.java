@@ -56,9 +56,9 @@ public class NodeController {
         return new ResponseEntity<Object>(response, HttpStatus.CREATED);
     }
 
-    @RequestMapping("/resolve")
+    @RequestMapping("/sync")
     public Map<String, Object> consensus() {
-        Boolean replaced = blockchain.resolveConflicts();
+        Boolean replaced = blockchain.syncNode();
 
         Map<String, Object> response = new HashMap<>();
         response.put("new_chain", blockchain.getChain());

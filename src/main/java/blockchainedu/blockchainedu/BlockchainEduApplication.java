@@ -11,10 +11,8 @@ import java.util.UUID;
 
 @SpringBootApplication
 public class BlockchainEduApplication {
-
-    //https://hackernoon.com/learn-blockchains-by-building-one-117428612f46
-
     public static void main(String... args) {
+//        System.getProperties().put( "server.port", 1234 );
         if (System.getProperty("blockchain.node.id") == null) {
             System.setProperty("blockchain.node.id", UUID.randomUUID().toString().replace("-", ""));
         }

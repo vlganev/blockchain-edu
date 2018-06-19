@@ -36,7 +36,7 @@ public class BlockController {
         Map<String, Object> response = new HashMap<>();
         HashHelper hashHelper = new HashHelper();
 
-        if (!blockchain.resolveConflicts()) {
+        if (!blockchain.syncNode()) {
             Block block = blockchain.createBlock(new Block(nonce, hashHelper.hashBlock(lastBlock)));
             response.put("message", "New Block Forged");
             response.put("index", block.getIndex());

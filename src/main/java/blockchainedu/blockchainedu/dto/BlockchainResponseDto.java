@@ -6,11 +6,8 @@ import java.io.Serializable;
 import java.util.List;
 
 public class BlockchainResponseDto implements Serializable {
-
     private List<Block> chain;
-
     private int length;
-
     public BlockchainResponseDto() {
 
     }
