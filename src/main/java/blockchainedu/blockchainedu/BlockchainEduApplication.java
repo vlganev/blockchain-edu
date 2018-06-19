@@ -13,6 +13,7 @@ import java.util.UUID;
 public class BlockchainEduApplication {
     public static void main(String... args) {
 //        System.getProperties().put( "server.port", 1234 );
+        System.setProperty("blockchain.node.id", "your address generated from the wallet");
         if (System.getProperty("blockchain.node.id") == null) {
             System.setProperty("blockchain.node.id", UUID.randomUUID().toString().replace("-", ""));
         }

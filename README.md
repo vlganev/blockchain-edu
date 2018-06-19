@@ -32,3 +32,5 @@ Example:
 /get-miner-job -> get miner job [GET]
 
 /get-block/{id} -> apply for the next block [POST]
+
+/accounts -> show amounts of each addresses @ blockchain. You can earn coins by mining process (+1 each) or by the genesis block [GET]

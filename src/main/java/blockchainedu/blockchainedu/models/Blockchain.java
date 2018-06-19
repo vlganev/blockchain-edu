@@ -3,12 +3,14 @@ package blockchainedu.blockchainedu.models;
 import blockchainedu.blockchainedu.dto.BlockchainResponseDto;
 import blockchainedu.blockchainedu.dto.TransactionsResponseDto;
 import blockchainedu.blockchainedu.helper.HashHelper;
+import blockchainedu.blockchainedu.models.Account;
 import com.google.common.io.BaseEncoding;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -21,6 +23,8 @@ public class Blockchain implements Serializable {
     private List<Block> chain;
     private Set<URL> nodes;
     private RestTemplate restTemplate;
+    private HashMap<String, BigDecimal> accounts;
+    private int mappedBlocksIndex;
 
     @Autowired
     public Blockchain(HashHelper hashHelper) {
@@ -29,6 +33,8 @@ public class Blockchain implements Serializable {
         this.nodes = Collections.synchronizedSet(new HashSet<>());
         this.hashHelper = hashHelper;
         this.restTemplate = new RestTemplate();
+        this.mappedBlocksIndex = 0;
+        this.accounts = new HashMap<String, BigDecimal>();
 
         createBlock(new Block(100, "1"));
     }
@@ -47,10 +53,37 @@ public class Blockchain implements Serializable {
         }
 
         this.currentTransactions = Collections.synchronizedList(new LinkedList<>());
-
         this.chain.add(block);
+        updateAccounts();
 
         return block;
+    }
+
+    public void updateAccounts() {
+        for (int index=mappedBlocksIndex; index < getChainSize(); index++) {
+            for (Transaction transaction: this.chain.get(index).getTransactions()) {
+                BigDecimal amountRecipient = accounts.get(transaction.getRecipient());
+                if (amountRecipient == null) {
+                    accounts.put(transaction.getRecipient(), transaction.getAmount());
+                } else {
+                    BigDecimal currAmount = amountRecipient.add(transaction.getAmount());
+                    accounts.put(transaction.getRecipient(), currAmount);
+                }
+
+                BigDecimal amountSender = accounts.get(transaction.getSender());
+                if (amountSender == null) {
+                    accounts.put(transaction.getSender(), transaction.getAmount().negate());
+                } else {
+                    BigDecimal currAmount = amountSender.subtract(transaction.getAmount());
+                    accounts.put(transaction.getSender(), currAmount);
+                }
+            }
+        }
+        mappedBlocksIndex = this.chain.size();
+    }
+
+    public Map<String, BigDecimal> getAddressAmounts() {
+        return accounts;
     }
 
     public Block getLastBlock() {

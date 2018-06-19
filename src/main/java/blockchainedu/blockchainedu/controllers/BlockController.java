@@ -31,7 +31,7 @@ public class BlockController {
 
         long nonce = blockchain.proofOfWork(lastNonce);
 
-        blockchain.createTransaction(new Transaction("0", blockchainNodeId, BigDecimal.valueOf(1), "0", "0"));
+        blockchain.createTransaction(new Transaction("Faucet address", blockchainNodeId, BigDecimal.valueOf(1), "0", "0"));
 
         Map<String, Object> response = new HashMap<>();
         HashHelper hashHelper = new HashHelper();
@@ -73,5 +73,10 @@ public class BlockController {
     public @ResponseBody Block block(@PathVariable("id") int id) {
         Block block = blockchain.getBlock(id);
         return block;
+    }
+
+    @RequestMapping("/accounts")
+    public Map<String, BigDecimal> getAddressAmounts() {
+        return blockchain.getAddressAmounts();
     }
 }
