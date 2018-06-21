@@ -1,6 +1,8 @@
 package blockchainedu.blockchainedu.models;
 
 
+import blockchainedu.blockchainedu.helper.HashHelper;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -11,15 +13,27 @@ public class Block implements Serializable {
     private long nonce;
     private String previousHash;
 
-    public Address minedBy;
+    public String minedBy;
     public long difficulty;
-    public String blockDataHash;
 
     public Block() {}
 
-    public Block(long nonce, String previousHash) {
-        this.nonce = nonce;
+    public Block(String previousHash, long index, long timestamp, long nonce) {
+        HashHelper hashHelper = new HashHelper();
         this.previousHash = previousHash;
+        this.index = index;
+        this.timestamp = timestamp;
+        this.nonce = nonce;
+    }
+
+    public Block(BlockCandidate block, String previousHash, int difficulty, String address) {
+        HashHelper hashHelper = new HashHelper();
+        this.previousHash = previousHash;
+        this.index = block.getIndex();
+        this.timestamp = block.getTimestamp();
+        this.nonce = block.getNonce();
+        this.difficulty = difficulty;
+        this.minedBy = address;
     }
 
     public long getIndex() {
@@ -61,4 +75,5 @@ public class Block implements Serializable {
     public void setPreviousHash(String previousHash) {
         this.previousHash = previousHash;
     }
+
 }

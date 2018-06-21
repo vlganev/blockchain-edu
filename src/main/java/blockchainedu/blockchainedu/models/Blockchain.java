@@ -6,6 +6,7 @@ import blockchainedu.blockchainedu.helper.HashHelper;
 import blockchainedu.blockchainedu.models.Account;
 import com.google.common.io.BaseEncoding;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -35,8 +36,7 @@ public class Blockchain implements Serializable {
         this.restTemplate = new RestTemplate();
         this.mappedBlocksIndex = 0;
         this.accounts = new HashMap<String, BigDecimal>();
-
-        createBlock(new Block(100, "1"));
+        createBlock(new Block("1", 0, 0, 100));
     }
 
     public Block createBlock(Block block) {
@@ -134,11 +134,9 @@ public class Blockchain implements Serializable {
             if (!chain.get(currentIndex).getPreviousHash().equals(this.chain.get(currentIndex).getPreviousHash())) {
                 return false;
             }
-            System.out.printf(Integer.toString(currentIndex));
-            System.out.printf("this " +this.chain.get(currentIndex).getNonce());
-            System.out.printf("chain " + chain.get(currentIndex).getNonce());
+
             if (currentIndex > 0) {
-                if (!validProof(chain.get(currentIndex - 1).getNonce(), chain.get(currentIndex).getNonce())) {
+                if (!isValidBlock(block, 4)) {
                     return false;
                 }
             }
@@ -170,13 +168,15 @@ public class Blockchain implements Serializable {
 
         if (newChain != null) {
             this.chain = newChain;
+
+            // sync pending transaction, one sender can do transactions only on 1 node
+            // if there are transactions of the the sender on the other chains
+            // his transactions will be dropped. On the next version will be fixed ;)
+//            syncPendingTransactions();
+
             return true;
         }
 
-        // sync pending transaction, one sender can do transactions only on 1 node
-        // if there are transactions of the the sender on the other chains
-        // his transactions will be dropped. On the next version will be fixed ;)
-        syncPendingTransactions();
 
         return false;
     }
@@ -185,15 +185,32 @@ public class Blockchain implements Serializable {
         Set<URL> neighbours = this.nodes;
 
         for (URL node:neighbours) {
-            TransactionsResponseDto response = restTemplate.getForObject(node.toString() + "/transaction/pending", TransactionsResponseDto.class);
+            ResponseEntity<TransactionsResponseDto> response = restTemplate.getForEntity(node.toString() + "/transaction/pending", TransactionsResponseDto.class);
 
-            int length = response.getLength();
-            List<Transaction> remoteTransactions = response.getTransactions();
+            System.out.printf("xxx");
+            System.out.printf(response.toString());
+            TransactionsResponseDto transactions = response.getBody();
+            int length = transactions.getLength();
+            List<Transaction> remoteTransactions = transactions.getTransactions();
 
             for (Transaction remoteTransaction : remoteTransactions) {
                 currentTransactions.removeIf(t -> t.getSender().equals(remoteTransaction.getSender()));
             }
         }
+    }
+
+    public boolean isValidBlock(Block lastBlock, int difficulty) {
+        String calculatedHash = hashHelper.hash(
+                lastBlock.getIndex() +
+                        lastBlock.getPreviousHash() +
+                        lastBlock.getTimestamp() +
+                        lastBlock.getNonce());
+
+        String difficultyString = new String(new char[difficulty]).replace('\0', '0');
+        if (calculatedHash.startsWith(difficultyString)) {
+            return true;
+        }
+        return false;
     }
 
     public Transaction getTransactionInfo(String hash) {
